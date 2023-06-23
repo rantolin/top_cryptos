@@ -1,0 +1,43 @@
+version: '3'
+
+services:
+  message_queue:
+    image: rabbitmq:3-management
+    ports:
+      - '5672:5672'
+      - '15672:15672'
+    restart: always
+
+  ranking_service:
+    build:
+      context: ./app
+      dockerfile: ranking.Dockerfile
+    environment:
+      - RANKING_API_KEY=${RANKING_API_KEY}
+      - MESSAGE_QUEUE_HOST=message_queue
+    restart: always
+    depends_on:
+      - message_queue
+
+  prices_service:
+    build:
+      context: ./app
+      dockerfile: prices.Dockerfile
+    # environment:
+      # - PRICES_API_KEY=${PRICES_API_KEY}
+      # - MESSAGE_QUEUE_HOST=message_queue
+    restart: always
+    depends_on:
+      - message_queue
+
+  app:
+    build:
+      context: ./app
+      dockerfile: Dockerfile
+    ports:
+      - "6667:6667"
+    depends_on:
+      - ranking_service
+      - prices_service
+
+
